@@ -7,10 +7,16 @@ import java.util.Set;
 import dom.Veiculo;
 
 @SuppressWarnings("rawtypes")
-public class MapVetor implements Map {
+public class MapLista implements Map {
 
-	private Veiculo vetor[] = new Veiculo[10];
+	private LDE vetor[] = new LDE[10];
 	private int nElementos = 0;
+
+	public MapLista() {
+		for (int i = 0; i < 10; i++) {
+			vetor[i] = new LDE();
+		}
+	}
 
 	public int hash(int key) {
 		return (int) (((key * 0.63274838) % 1) * vetor.length);
@@ -21,66 +27,30 @@ public class MapVetor implements Map {
 	}
 
 	public void put(int chave, Veiculo valor) {
-		int sondagem = 0;
-		int hash;
-		while (sondagem < vetor.length) {
-			hash = (hash(chave) + sondagem) % vetor.length;
-			if (vetor[hash] == null) {
-				nElementos++;
-				vetor[hash] = valor;
-				aumenta();
-				return;
-			} else if (vetor[hash].getChassi() == chave) {
-				vetor[hash] = valor;
-				aumenta();
-				return;
-			}
-			sondagem++;
-		}
-		aumenta();
-	}
-
-	private void aumenta() {
-		if (nElementos / vetor.length > 0.70) {
-			reSize();
-		}
+		int hash = hash(chave);
+		if(vetor[hash].busca(valor.getChassi()) == null)
+		vetor[hash(chave)].insereInicio(valor);
 	}
 
 	public void remove(int chave) {
-		int sondagem = 0;
-		int hash;
-		while (sondagem < vetor.length) {
-			hash = (hash(chave) + sondagem) % vetor.length;
-			if (vetor[hash] == null) {
-			} else if (vetor[hash].getChassi() == chave) {
-				vetor[hash] = null;
-				return;
-			}
-			sondagem++;
-		}
+
+		vetor[hash(chave)].remove(chave);
 	}
 
 	public Veiculo get(int chave) {
-		int sondagem = 0;
-		int hash;
-		while (sondagem < vetor.length) {
-			hash = (hash(chave) + sondagem) % vetor.length;
-			if (vetor[hash] == null) {
-			} else if (vetor[hash].getChassi() == chave) {
-				return vetor[hash];
-			}
-			sondagem++;
-		}
-		return null;
+		return vetor[hash(chave)].busca(chave);
 	}
 
 	public void reSize() {
-		Veiculo aux[] = vetor;
-		Veiculo novo[] = new Veiculo[vetor.length * 2];
+		LDE[] aux = vetor;
+		LDE[] novo = new LDE[vetor.length * 2];
 		this.vetor = novo;
 		this.nElementos = 0;
-		for (Veiculo veiculo : aux) {
-			put(veiculo.getChassi(), veiculo);
+		for (LDE lista : aux) {
+			for (int i = 0; i > lista.tamanho(); i++) {
+				Veiculo vei = lista.getByIndex(i);
+				put(vei);
+			}
 		}
 	}
 
@@ -104,8 +74,9 @@ public class MapVetor implements Map {
 
 	@Override
 	public void clear() {
-		vetor = new Veiculo[10];
-		nElementos = 0;
+		for (int i = 0; i < 10; i++) {
+			vetor[i] = new LDE();
+		}
 	}
 
 	@Override
@@ -153,7 +124,7 @@ public class MapVetor implements Map {
 		return null;
 	}
 
-	public void selection_sort() {
+	public void selection_sort(Veiculo[] vetor) {
 		for (int i = 0; i < vetor.length; i++) {
 			if (vetor[i] != null) {
 				int menor = i;
@@ -162,23 +133,44 @@ public class MapVetor implements Map {
 						if (vetor[j].getChassi() < vetor[menor].getChassi())
 							menor = j;
 				Veiculo aux = vetor[i];
-				this.vetor[i] = this.vetor[menor];
-				this.vetor[menor] = aux;
+				vetor[i] = vetor[menor];
+				vetor[menor] = aux;
 			}
 		}
 	}
 
+	private Veiculo[] juntaVetor(Veiculo v1[], Veiculo v2[]) {
+		Veiculo aux[] = new Veiculo[v1.length + v2.length];
+		for (int i = 0; i < v1.length; i++) {
+			aux[i] = v1[i];
+		}
+		for (int i = 0; i < v2.length; i++) {
+			aux[i + v1.length] = v2[i];
+		}
+		return aux;
+	}
+
+	public Veiculo[] getVetor() {
+		Veiculo[] vetor = new Veiculo[0];
+		for (int i = 0; i < this.vetor.length; i++) {
+			vetor = juntaVetor(vetor, this.vetor[i].getVetor());
+		}
+		return vetor;
+	}
+
 	public void imprimeOrdenado() {
-		selection_sort();
 		int aux = 0;
+		Veiculo vetor[] = getVetor();
+		selection_sort(vetor);
 		for (int i = aux; i < vetor.length; i++)
 			if (vetor[i] != null) {
-				aux ++;
+				aux++;
 				System.out.println(aux + " - " + vetor[i].toString());
 			}
 	}
 
 	public void printAllMarcaFord() {
+		Veiculo vetor[] = getVetor();
 		for (int i = 0; i < vetor.length; i++)
 			if (vetor[i] != null)
 				if (vetor[i].isMarcaFord())
@@ -186,9 +178,9 @@ public class MapVetor implements Map {
 	}
 
 	public void removeChassiMenorOuIgual(int valor) {
-		Veiculo aux[] = vetor;
+		Veiculo vetor[] = getVetor();
 		clear();
-		for (Veiculo veiculo : aux) {
+		for (Veiculo veiculo : vetor) {
 			if (veiculo != null)
 				if (veiculo.getChassi() > valor)
 					put(veiculo.getChassi(), veiculo);

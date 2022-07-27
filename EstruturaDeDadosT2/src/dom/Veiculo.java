@@ -1,5 +1,4 @@
 package dom;
-
 import java.util.Random;
 
 public class Veiculo implements Comparable<Veiculo>{
